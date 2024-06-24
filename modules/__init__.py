@@ -1,14 +1,11 @@
 # dashboard/__init__.py
-
 from .chatgpt import get_chatgpt_response
+from .fintera_financeiro_api import FinteraAPI, FinteraAPIException
+from .fintera_financeiro_api.helper import helper
 
-from .main import show_dashboard
-from .helpers import create_chart, calculate_statistics
+from .fintera_faturamento_api.model import Model
 
 # Define o que será acessível com "from dashboard import ..."
 __all__ = [
-    "show_dashboard",
-    "create_chart",
-    "calculate_statistics",
     "get_chatgpt_response"
 ]

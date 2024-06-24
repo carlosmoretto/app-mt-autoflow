@@ -1,5 +1,6 @@
 Ambiente virtual:
 virtualenv virtual  # Cria um ambiente virtual chamado 'virtual'
+
 source virtual/bin/activate  # Ativa o ambiente virtual no Unix/MacOS
 # ou
 virtual\Scripts\activate  # Ativa o ambiente virtual no Windows

@@ -1,7 +1,9 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
-from my_pages import home, billing_measurements, client_contract_termination, bank_batch_processing, assess_capital_requirements
 from authentication.login import authenticate, logout
+from my_pages import home, assess_capital_requirements, billing_measurements
+
+#from my_pages import home, billing_measurements, client_contract_termination, bank_batch_processing, assess_capital_requirements
 
 menu_style = {
                 "container": {"padding": "0!important", "background-color": "#f0f0f0"},
@@ -38,7 +40,6 @@ def main():
 
 def show_main_content():
     """Função para exibir o conteúdo principal do aplicativo."""
-
     # Sidebar menu without explicit input
     with st.sidebar:
         selected_main = option_menu(
@@ -66,10 +67,10 @@ def show_main_content():
 
             if selected_sub == "Lançamento de Medição":
                 billing_measurements.show()
-            elif selected_sub == "Baixar Malote":
-                bank_batch_processing.show()
-            elif selected_sub == "Calculo de Rescisão":
-                client_contract_termination.show()
+            # elif selected_sub == "Baixar Malote":
+            #     bank_batch_processing.show()
+            # elif selected_sub == "Calculo de Rescisão":
+            #     client_contract_termination.show()
             elif selected_sub == "Calculo de Aporte":
                 assess_capital_requirements.show()
 
