@@ -1,16 +1,4 @@
-Ambiente virtual:
-virtualenv virtual  # Cria um ambiente virtual chamado 'virtual'
-
-source virtual/bin/activate  # Ativa o ambiente virtual no Unix/MacOS
-# ou
-virtual\Scripts\activate  # Ativa o ambiente virtual no Windows
-
-Para sair do ambiente:
-deactivate
-
-
-Estrutura do projeto: 
-projeto_streamlit/
+my_project/
 │
 ├── modules/
 │   ├── __init__.py
