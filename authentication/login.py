@@ -11,7 +11,7 @@ def authenticate():
         if st.button("Login"):
             if username == "admin" and password == "admin":  # Verificação simples das credenciais
                 st.session_state['authenticated'] = True  # Atualiza o estado da sessão para autenticado
-                st.experimental_rerun()
+                st.rerun()
                 return True
             else:
                 st.error("Usuário ou senha incorretos.")
