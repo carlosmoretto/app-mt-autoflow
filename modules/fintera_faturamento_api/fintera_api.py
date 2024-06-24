@@ -5,6 +5,7 @@ import json
 import os
 import logging
 import sys
+import streamlit as st
 
 class Fintera:
 
@@ -29,9 +30,9 @@ class Fintera:
     def getTokens(self):
         # FGP Desenvolvimento de Software LTDA (14.209.764/0001-04)
         tokens = {
-            "FGP" : ("8160345722c3242290fa4f7c7a92a21c", 38602) ,
-            "Filial" : ("1e9eba9f1bd05c24a7cf84bc90e4a2ec", 24448),
-            "Matriz" : ("1e9eba9f1bd05c24a7cf84bc90e4a2ec", 775),
+            "FGP" : (st.secrets.api.FINTERA_FATU_FGP, 38602) ,
+            "Filial" : (st.secrets.api.FINTERA_FATU_FILIAL, 24448),
+            "Matriz" : (st.secrets.api.FINTERA_FATU_MATRIZ, 775),
         }
         return tokens
 

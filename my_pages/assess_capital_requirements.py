@@ -1,4 +1,4 @@
-
+import toml
 import streamlit as st
 import pandas as pd
 from datetime import datetime
@@ -46,14 +46,14 @@ def show():
     if confirmed:
         # Configurações da API
         BASE_URL = 'https://financeiro.fintera.com.br'
-        TOKEN = '7be1c5116127935fb8c7c561894adcee18f931dec72e2e7e'
+        TOKEN = st.secrets.api.FINTERA_FINA_25
 
         # Inicializar a API
         api = FinteraAPI(BASE_URL, TOKEN)
         
         # calculo de aporte para next_days 
         next_days = 10
-        
+
         with st.spinner('Carregando contas a pagar...'):
             result = api.list_payable_accounts(id_entity, {"search[due_date_gte]":"22/06/2024", 
                                                         "search[due_date_lte]":"15/07/2024"

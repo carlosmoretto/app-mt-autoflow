@@ -4,3 +4,4 @@ streamlit_option_menu
 openpyxl
 pandas
 openai
+toml
