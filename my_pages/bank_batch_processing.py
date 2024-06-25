@@ -28,7 +28,7 @@ def show():
     
         # Configurações da API
         BASE_URL = 'https://financeiro.fintera.com.br'
-        TOKEN = '7be1c5116127935fb8c7c561894adcee18f931dec72e2e7e'
+        TOKEN = st.secrets.api.FINTERA_FINA_25
 
         # Inicializar a API
         api = FinteraAPI(BASE_URL, TOKEN)
