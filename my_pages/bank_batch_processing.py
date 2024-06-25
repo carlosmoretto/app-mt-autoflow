@@ -1,8 +1,7 @@
 
 import streamlit as st
-from backend.fintera_financeiro_api.helper import helper
 import pandas as pd
-from backend.fintera_financeiro_api import FinteraAPI, FinteraAPIException
+from modules import helper, FinteraAPI, FinteraAPIException, helper
 from datetime import datetime
 
 def show():

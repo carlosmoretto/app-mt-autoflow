@@ -9,11 +9,9 @@ from modules import helper, FinteraAPI, FinteraAPIException
 
 def show():
 
-    st.title("Malote Bancário")
-    st.write("Esta página vai ser utilizada para baixar os malotes bancários.")
+    st.subheader("Vamos calcular as próximas solicitações de aporte")
 
     selected_option = helper().get_entities_selectbox(st)
-
     st.write(f'Processando malote da empresa: {selected_option}')
     
     #lista com empresa ID e empresa name
@@ -21,8 +19,6 @@ def show():
     
     # Buscar o ID da empresa
     id_entity = df.loc[df["name"] == selected_option, "entity_id"].values[0]
-    
-    #st.write(f'Empresa ID: {id_entity}')
     
     st.warning("Antes de iniciar faça os prés-requisitos: ")
     
@@ -37,10 +33,12 @@ def show():
         # Ativar entrada para definir saldo mínimo
         st.session_state['definir_saldo'] = True
 
-    # Se o estado de definir saldo foi ativado, mostrar o input
+    # Mostra o input para definir saldo mínimo se o botão foi clicado
     if 'definir_saldo' in st.session_state and st.session_state['definir_saldo']:
-        st.session_state['account_min'] = st.number_input("Definir saldo mínimo para as contas", value=float(st.session_state['account_min']), format="%.2f")
-        account_min = st.session_state['account_min']
+        account_min = st.number_input("Definir saldo mínimo para as contas", value=float(st.session_state['account_min']), format="%.2f")
+        st.session_state['account_min'] = account_min  # Atualizar o valor no estado da sessão
+    else:
+        account_min = st.session_state['account_min']  # Usar o valor padrão ou o já definido
 
     confirmed = st.button("Está tudo certo para iniciar?")
     if confirmed:
