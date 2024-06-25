@@ -1,5 +1,6 @@
 import pandas as pd
 import locale
+import platform
 import sys
 
 class helper:
@@ -50,13 +51,17 @@ class helper:
     def get_number (self, value):
         value = float(value)  # Convertendo para float
 
+        # Identificar o sistema operacional
+        os_type = platform.system()
+
         # Configuração de locale para usar ponto como separador de milhar e vírgula para decimal
-        # Tente mudar para o locale que deseja, dependendo do seu sistema operacional.
-        locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')  # Em sistemas Unix/Linux
-        # locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')  # Em sistemas Windows
+        if os_type == 'Linux':
+            locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+        elif os_type == 'Windows':
+            locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
 
         # Formatando o número
         formatted_number = locale.format_string("%.2f", value, grouping=True)
 
-        # Imprimindo o número formatado
+        # Retornando o número formatado
         return formatted_number
