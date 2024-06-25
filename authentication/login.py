@@ -9,7 +9,7 @@ def authenticate():
         username = st.text_input("Usuário")
         password = st.text_input("Senha", type="password")
         if st.button("Login"):
-            if username == "admin" and password == "admin":  # Verificação simples das credenciais
+            if username == st.secrets.user.ADMIN_USER and password == st.secrets.user.ADMIN_PASS:  # Verificação simples das credenciais
                 st.session_state['authenticated'] = True  # Atualiza o estado da sessão para autenticado
                 st.rerun()
                 return True
