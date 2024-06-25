@@ -51,14 +51,17 @@ class helper:
     def get_number (self, value):
         value = float(value)  # Convertendo para float
 
-        # Identificar o sistema operacional
-        os_type = platform.system()
+        try:
+            # Identificar o sistema operacional
+            os_type = platform.system()
 
-        # Configuração de locale para usar ponto como separador de milhar e vírgula para decimal
-        if os_type == 'Linux':
-            locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
-        elif os_type == 'Windows':
-            locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
+            # Configuração de locale para usar ponto como separador de milhar e vírgula para decimal
+            if os_type == 'Linux':
+                locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+            elif os_type == 'Windows':
+                locale.setlocale(locale.LC_ALL, 'Portuguese_Brazil.1252')
+        except locale.Error:
+            locale.setlocale(locale.LC_ALL, '')  # Usar locale padrão do sistema se falhar
 
         # Formatando o número
         formatted_number = locale.format_string("%.2f", value, grouping=True)
