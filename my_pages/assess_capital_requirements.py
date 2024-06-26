@@ -3,8 +3,9 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import time
+import re
 
-from modules import helper, FinteraAPI, FinteraAPIException 
+from modules import helper, FinteraAPI, FinteraAPIException
 
 
 def show():
@@ -20,9 +21,9 @@ def show():
     # Buscar o ID da empresa
     id_entity = df.loc[df["name"] == selected_option, "entity_id"].values[0]
     
-    st.warning("Antes de iniciar faça os prés-requisitos: ")
+    st.warning("Antes de iniciar faça os prés-requisitos: \n1. Conciliação deve estar em dia.\n2. Todas as despesas a vencer precisam ter conta bancária informada")
     
-    st.write("Gostaria de definir um saldo minimo? Caso um saldo não seja definido, o minimo será zero.")
+    st.write("Gostaria de definir um saldo minimo? (Caso o saldo minimo não seja definido, o minimo zero)")
 
     # Inicializa o valor mínimo da conta no estado da sessão, se ainda não estiver definido
     if 'account_min' not in st.session_state:
@@ -40,6 +41,8 @@ def show():
     else:
         account_min = st.session_state['account_min']  # Usar o valor padrão ou o já definido
 
+    contas_receber = st.checkbox("Considerar contas a receber")
+    
     confirmed = st.button("Está tudo certo para iniciar?")
     if confirmed:
         # Configurações da API
@@ -52,91 +55,169 @@ def show():
         # calculo de aporte para next_days 
         next_days = 10
 
-        with st.spinner('Carregando contas a pagar...'):
-            result = api.list_payable_accounts(id_entity, {"search[due_date_gte]":"22/06/2024", 
-                                                        "search[due_date_lte]":"15/07/2024"
-                                                        })
-
-        df = pd.json_normalize(result, meta=["id", "entity_id"])
-
-        df = df[["payable_account.entity_id", 
-                    "payable_account.status_name", 
-                    'payable_account.due_date', 
-                    "payable_account.amount", 
-                    "payable_account.total_amount",
-                    "payable_account.expected_deposit_account_id",
-                    "payable_account.person_id"]]
-
-        df['payable_account.expected_deposit_account_id'] = df['payable_account.expected_deposit_account_id'].fillna(0).astype(int)
-
-        list_banks = df["payable_account.expected_deposit_account_id"].unique()
-    
-        st.subheader("Vamos fazer o calculo de aporte para cada conta bancária existente.")
-        st.write(F"Você tem {len([x for x in list_banks if x != 0])} contas para o calculo.")
+        group_by = []
         
-        df['payable_account.due_date'] = pd.to_datetime(df['payable_account.due_date'])
-        df['day_year_month'] = df['payable_account.due_date'].dt.to_period('D')
+        with st.spinner('Carregando contas a pagar...'):
+            type = "payable_accounts"
+            result = api.list_payable_accounts(id_entity, type, {"search[due_date_gte]":"22/06/2024", 
+                                                        "search[due_date_lte]":"15/07/2024"})
+            df_agruped = prepare_counts(result, "payable_account")
+            
+            group_by.append("payable_account.amount")
+            
+        if contas_receber:
+            with st.spinner('Carregando contas a receber...'):
+                df_agruped_pagar = df_agruped
+                type = "receivable_accounts"
+                result = api.list_payable_accounts(id_entity, type, {"search[due_date_gte]":"22/06/2024", 
+                                                            "search[due_date_lte]":"15/07/2024"})
+                df_agruped = prepare_counts(result, "receivable_account")
+                
+                group_by.append("receivable_account.amount")
 
-        df["payable_account.total_amount"] = df["payable_account.total_amount"].astype(float)
-        df["payable_account.amount"] = df["payable_account.amount"].astype(float)
-        day_month_sales = df.groupby("day_year_month")["payable_account.amount"].sum().reset_index()
-        day_month_sales["payable_account.amount"] = day_month_sales["payable_account.amount"].apply(lambda x: f"{x:.2f}")
-        day_month_sales["day_year_month"] = day_month_sales["day_year_month"].dt.to_timestamp()
+            df_agruped = pd.merge(df_agruped_pagar, df_agruped, on=["due_date", "expected_deposit_account_id"], how='outer')
+        
+            df_agruped['payable_account.amount'] = df_agruped['payable_account.amount'].fillna(0.0).astype(float)
+        
+        if 'receivable_account.amount' in df_agruped.columns:
+            df_agruped['receivable_account.amount'] = df_agruped['receivable_account.amount'].fillna(0.0).astype(float)
+        
+        st.subheader("Executando calculo de aporte para cada conta bancária existente. :rocket:")
 
-        for bank in list_banks:
-            #Fazer a consulta para buscar os dados bancários
+        bank_list = df_agruped["expected_deposit_account_id"].unique()
+        
+        saldo_total_inicial = 0
+        
+        for bank in bank_list:           
             if bank > 0:
+                #consulta o saldo inicial de cada conta
                 with st.spinner('Carregando dados das contas bancárias...'):
-                    bank_res = api.get_deposit_accounts(id_entity, bank)
+                    bank_res = api.get_deposit_accounts(id_entity, bank)                
                 
                 bank_df = pd.DataFrame(bank_res)
-
+                
                 deposit_account_calculated_balance = float(0.00)
-
                 if "deposit_account" in bank_df.columns:
-                    # Criando uma nova coluna 'account_name' baseada na chave 'name' do dicionário em 'deposit_account'
                     deposit_account_name = bank_df['deposit_account']['name']
                     deposit_account_calculated_balance = float(bank_df['deposit_account']['calculated_balance'])
+                    saldo_total_inicial += deposit_account_calculated_balance
                     
                     st.write(F"1. Buscando informações da conta: {deposit_account_name}")
                     st.write(F"2. Saldo atual: {helper().get_number(deposit_account_calculated_balance)}")
+                    
+                    df_filtered = df_agruped[df_agruped["expected_deposit_account_id"] == bank]
+                    df = creat_capila_support(df_filtered, account_min, deposit_account_calculated_balance)
+                    create_table(df)
+        
+        if len(bank_list) > 0:
+            st.write("3. Totalizador geral de aportes....")
+            df = df_agruped.groupby("due_date").sum(group_by).reset_index()
+            df = creat_capila_support(df, account_min, saldo_total_inicial)
+            create_table(df)
 
-                    saldo_novo = 0
-                    saldo_ant = 0
-                    first = True
+            create_summary(df)
 
-                    for index, day_payable_account in day_month_sales.iterrows():
-                        
-                        amount = float(day_payable_account['payable_account.amount'])
-                        if first:
-                            first = False
-                            day_result = deposit_account_calculated_balance - amount
-                            saldo_novo = day_result
-                        else:
-                            saldo_novo -= amount
 
-                        if saldo_novo < account_min:
-                            day_month_sales.at[index, "aporte"] = (saldo_novo*-1) + account_min
-                            saldo_novo += day_month_sales.at[index, "aporte"]
-                        else:
-                            day_month_sales.at[index, "aporte"] = 0
+def prepare_counts(results, type_str):
+    
+    df = pd.json_normalize(results, meta=["id", "entity_id"])
+    
+    index = ["entity_id", 
+            "status_name", 
+            'due_date', 
+            "amount", 
+            "total_amount",
+            "expected_deposit_account_id",
+            "person_id"]
 
-                        day_month_sales.at[index, "novo_saldo"] = saldo_novo
-                        saldo_ant = saldo_novo
+    # simplifica a lista
+    df = df[[f'{type_str}.{x}' for x in index]]
 
-                    st.data_editor(day_month_sales,
-                                   column_config={
-                                        "day_year_month": st.column_config.DateColumn(
-                                            "Data",
-                                            format="DD/MM/YYYY"
-                                        ),"payable_account.amount": st.column_config.NumberColumn(
-                                            "Contas a Pagar",
-                                            format="%.2f",
-                                        ),"aporte": st.column_config.NumberColumn(
-                                            "Valor a Aportar",
-                                            format="%.2f",
-                                        ),"novo_saldo": st.column_config.NumberColumn(
-                                            "Saldo",
-                                            format="%.2f",
-                                        ),                                        
-                                   })
+    # converte colunas vazias para zero
+    df['expected_deposit_account_id'] = df[f'{type_str}.expected_deposit_account_id'].fillna(0).astype(int)
+
+    # converte o campo vencimento para datetime
+    df[f'{type_str}.due_date'] = pd.to_datetime(df[f'{type_str}.due_date'])
+    
+    # campo para agrupamento
+    df['due_date'] = pd.to_datetime(df[f'{type_str}.due_date'])
+    
+    # Converter para float
+    df[f'{type_str}.amount'] = df[f'{type_str}.amount'].astype(float)
+    df[f'{type_str}.total_amount'] = df[f'{type_str}.total_amount'].astype(float)
+
+    df_agruped = df.groupby(['due_date', 'expected_deposit_account_id'])[f'{type_str}.amount'].sum().reset_index()
+
+    return df_agruped
+
+def creat_capila_support(df, min_bank_balance, bank_balance):
+    # Assegure que o DataFrame é uma cópia para não alterar o original fora da função
+    df = df.copy()
+
+    # Inicializar as colunas 'aporte' e 'novo_saldo' com tipos apropriados
+    df['aporte'] = pd.Series(dtype='float')
+    df['novo_saldo'] = pd.Series(dtype='float')
+    
+    saldo_novo = bank_balance
+
+    for index, row in df.iterrows():
+        amount = float(row['payable_account.amount'])
+        receivable_accounts_amount = float(row.get('receivable_account.amount', 0.0))
+        
+        saldo_novo -= (amount - receivable_accounts_amount)
+
+        if saldo_novo < min_bank_balance:
+            aporte_necessario = min_bank_balance - saldo_novo
+            df.loc[index, 'aporte'] = aporte_necessario
+            saldo_novo += aporte_necessario
+        else:
+            df.loc[index, 'aporte'] = 0.0
+
+        df.loc[index, 'novo_saldo'] = saldo_novo
+    
+    df = df.drop(["expected_deposit_account_id"], axis=1)
+    
+    return df
+
+def create_table(df):
+    st.data_editor(df,
+                column_config={
+                    "due_date": st.column_config.DateColumn(
+                        "Data",
+                        format="DD/MM/YYYY"
+                    ),"receivable_account.amount": st.column_config.NumberColumn(
+                        "A receber",
+                        format="%.2f",
+                    ),"payable_account.amount": st.column_config.NumberColumn(
+                        "A Pagar",
+                        format="%.2f",
+                    ),"aporte": st.column_config.NumberColumn(
+                        "Valor a Aportar",
+                        format="%.2f",
+                    ),"novo_saldo": st.column_config.NumberColumn(
+                        "Saldo",
+                        format="%.2f",
+                    ),                                        
+                })
+    
+def create_summary (df):
+    st.subheader("Processo de Calculo Feito com Sucesso:")
+    
+    if st.button("Gostaria de enviar por email?"):
+        # Solicita entrada do usuário
+        email = st.text_input("Email", placeholder="Digite o email...")
+
+        if email:  # Verifica se alguma coisa foi digitada
+            if validar_email(email):
+                st.success("Email válido!")
+            else:
+                st.error("Email inválido. Por favor, digite um email válido.")
+        else:
+            st.info("Por favor, digite um email.")
+
+def validar_email(email):
+    # Regex para validar email
+    pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    if re.match(pattern, email):
+        return True
+    return False

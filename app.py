@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 from authentication.login import authenticate, logout
-from my_pages import home, assess_capital_requirements, billing_measurements
+from my_pages import home, assess_capital_requirements, billing_measurements, contracts_summary
 
 #from my_pages import home, billing_measurements, client_contract_termination, bank_batch_processing, assess_capital_requirements
 
@@ -58,8 +58,8 @@ def show_main_content():
             with st.sidebar:
                 selected_sub = option_menu(
                     menu_title="Nexaas",
-                    options=["Lançamento de Medição", "Baixar Malote", "Calculo de Rescisão", "Calculo de Aporte"],
-                    icons=["bi-cash-coin", "bi-cloud-download", "bi-x", "bi-cash-coin"],
+                    options=["Lançamento de Medição", "Baixar Malote", "Calculo de Rescisão", "Calculo de Aporte", "Contratos AI"],
+                    icons=["bi-cash-coin", "bi-cloud-download", "bi-x", "bi-cash-coin", "bi-file-earmark"],
                     menu_icon="bi-tools",
                     default_index=0,
                     #styles=menu_style
@@ -73,6 +73,8 @@ def show_main_content():
             #     client_contract_termination.show()
             elif selected_sub == "Calculo de Aporte":
                 assess_capital_requirements.show()
+            elif selected_sub == "Contratos AI":
+                contracts_summary.show()                
 
 if __name__ == '__main__':
     main()

@@ -14,7 +14,7 @@ class FinteraAPI:
             "ACCOUNT_ID" : "25"
         }
 
-    def list_payable_accounts(self, entity_id, params=None):
+    def list_payable_accounts(self, entity_id, type, params=None):
         accounts = []  # Lista para armazenar todos os registros acumulados
         page = 1       # Inicializa a contagem de páginas
         
@@ -26,7 +26,7 @@ class FinteraAPI:
         while True:
             params['page'] = page  # Atualiza o número da página na requisição
             query_string = urlencode(params)
-            url = f'{self.base_url}/entities/{entity_id}/payable_accounts?{query_string}'
+            url = f'{self.base_url}/entities/{entity_id}/{type}?{query_string}'
             
             response = requests.get(url, headers=self.headers, auth=HTTPBasicAuth(self.token, ''))
             data = handle_response(response)  # Supondo que handle_response retorne os dados já deserializados
