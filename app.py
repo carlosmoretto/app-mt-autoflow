@@ -7,18 +7,18 @@ from my_pages import home, assess_capital_requirements, billing_measurements, co
 
 menu_style = {
                 "container": {"padding": "0!important", "background-color": "#f0f0f0"},
-                "icon": {"color": "orange", "font-size": "25px"}, 
+                "icon": {"color": "orange", "font-size": "22px"}, 
                 "nav-link": {
-                    "font-size": "13px",
+                    "font-size": "10px",
                     "text-align": "left",
                     "margin": "0px",
-                    "padding": "10px",
+                    "padding": "12px",
                     "color": "black",
                 },
                 "nav-link-selected": {"background-color": "#a1dbfb", "font-weight": "normal"},
             }
 
-st.set_page_config(layout="wide", page_title="MT ASSESSORIA", page_icon=":smiley:", initial_sidebar_state="auto")
+st.set_page_config(layout="wide", page_title="AUTOFLOW", page_icon=":smiley:", initial_sidebar_state="auto")
 
 def main():
     # Verifica se o usuário está logado
