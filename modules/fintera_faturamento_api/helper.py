@@ -84,6 +84,10 @@ class Helper:
 		return data_list
 
 	def getPath (self, fileName=''):
+     
+		base_path = os.path.dirname(__file__)
+		return os.path.join(base_path, 'modules', 'fintera_faturamento_api', fileName)
+
 		diretorio_arquivo = os.path.dirname(__file__)
 		return f'{diretorio_arquivo}\{fileName}'
 
