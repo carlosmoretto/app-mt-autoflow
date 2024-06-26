@@ -58,8 +58,8 @@ def show_main_content():
             with st.sidebar:
                 selected_sub = option_menu(
                     menu_title="Nexaas",
-                    options=["Lançamento de Medição", "Baixar Malote", "Calculo de Rescisão", "Calculo de Aporte", "Contratos AI"],
-                    icons=["bi-cash-coin", "bi-cloud-download", "bi-x", "bi-cash-coin", "bi-file-earmark"],
+                    options=["Lançamento de Medição", "Baixar Malote", "Calculo de Rescisão", "Calculo de Aporte", "Contratos AI", "Consulta de CNPJ"],
+                    icons=["bi-cash-coin", "bi-cloud-download", "bi-x", "bi-cash-coin", "bi-file-earmark", "bi-search"],
                     menu_icon="bi-tools",
                     default_index=0,
                     #styles=menu_style
@@ -74,7 +74,7 @@ def show_main_content():
             elif selected_sub == "Calculo de Aporte":
                 assess_capital_requirements.show()
             elif selected_sub == "Contratos AI":
-                contracts_summary.show()                
+                contracts_summary.show()
 
 if __name__ == '__main__':
     main()
