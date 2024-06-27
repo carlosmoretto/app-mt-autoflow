@@ -57,7 +57,8 @@ def show():
 
         group_by = []
         
-        with st.spinner('Carregando contas a pagar...'):
+        with st.status("Downloading..."):
+            st.write("Procurando contas a pagar...")
             type = "payable_accounts"
             result = api.list_payable_accounts(id_entity, type, {"search[due_date_gte]":"22/06/2024", 
                                                         "search[due_date_lte]":"15/07/2024"})
@@ -65,19 +66,18 @@ def show():
             
             group_by.append("payable_account.amount")
             
-        if contas_receber:
-            with st.spinner('Carregando contas a receber...'):
+            if contas_receber:
+                st.write("Procurando contas a receber...")
                 df_agruped_pagar = df_agruped
                 type = "receivable_accounts"
                 result = api.list_payable_accounts(id_entity, type, {"search[due_date_gte]":"22/06/2024", 
                                                             "search[due_date_lte]":"15/07/2024"})
                 df_agruped = prepare_counts(result, "receivable_account")
-                
                 group_by.append("receivable_account.amount")
 
-            df_agruped = pd.merge(df_agruped_pagar, df_agruped, on=["due_date", "expected_deposit_account_id"], how='outer')
-        
-            df_agruped['payable_account.amount'] = df_agruped['payable_account.amount'].fillna(0.0).astype(float)
+                df_agruped = pd.merge(df_agruped_pagar, df_agruped, on=["due_date", "expected_deposit_account_id"], how='outer')
+            
+                df_agruped['payable_account.amount'] = df_agruped['payable_account.amount'].fillna(0.0).astype(float)
         
         if 'receivable_account.amount' in df_agruped.columns:
             df_agruped['receivable_account.amount'] = df_agruped['receivable_account.amount'].fillna(0.0).astype(float)
