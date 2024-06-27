@@ -1,80 +1,71 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
+import json
+import os
+
 from authentication.login import authenticate, logout
-from my_pages import home, assess_capital_requirements, billing_measurements, contracts_summary
+from my_pages import home, assess_capital_requirements, billing_measurements, contracts_summary, autoflow_manager_menu
 
-#from my_pages import home, billing_measurements, client_contract_termination, bank_batch_processing, assess_capital_requirements
-
-menu_style = {
-                "container": {"padding": "0!important", "background-color": "#f0f0f0"},
-                "icon": {"color": "orange", "font-size": "22px"}, 
-                "nav-link": {
-                    "font-size": "10px",
-                    "text-align": "left",
-                    "margin": "0px",
-                    "padding": "12px",
-                    "color": "black",
-                },
-                "nav-link-selected": {"background-color": "#a1dbfb", "font-weight": "normal"},
-            }
-
-st.set_page_config(layout="wide", page_title="AUTOFLOW", page_icon=":smiley:", initial_sidebar_state="auto")
+# Função para carregar as configurações do menu de um arquivo JSON
+def load_menu_config():
+    config_path = 'config/menus.json'
+    with open(config_path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+        # Ordenar menus e submenus
+        data['menus'] = sorted(data['menus'], key=lambda x: x.get('order', 999))
+        for menu in data['menus']:
+            if 'submenu' in menu:
+                menu['submenu'] = sorted(menu['submenu'], key=lambda x: x.get('order', 999))
+        return data
 
 def main():
+    st.set_page_config(layout="wide", page_title="AUTOFLOW", page_icon=":smiley:", initial_sidebar_state="auto")
+    
     # Verifica se o usuário está logado
     if not st.session_state.get('authenticated', False):
-        # Usuário não está logado, mostrar o formulário de login
         if authenticate():
-            # Após login, mostra o conteúdo principal
-            show_main_content()
+            display_menu()
         else:
-            # Continua mostrando o formulário de login
             st.sidebar.warning("Por favor, faça login para acessar o aplicativo.")
     else:
-        # Usuário está logado, mostra o conteúdo principal
-        show_main_content()
-        if st.session_state.get('authenticated', True):
-            if st.sidebar.button("Logout"):
-                logout()            
-            
+        display_menu()
+        if st.sidebar.button("Logout"):
+            logout()
 
-def show_main_content():
-    """Função para exibir o conteúdo principal do aplicativo."""
-    # Sidebar menu without explicit input
+def display_menu():
     with st.sidebar:
+        menus = load_menu_config()
         selected_main = option_menu(
-            menu_title="Menu",
-            options=["Home", "Nexaas"],
-            icons=["house", "bi-tools"],
+            menu_title="Menu Principal",
+            options=[menu['title'] for menu in menus['menus']],
+            icons=[menu['icon'] for menu in menus['menus']],
             menu_icon="cast",
-            default_index=0,
-            #styles=menu_style
+            default_index=0
         )
 
-    if selected_main == "Home":
-        home.show()
-    else:
-        if selected_main == "Nexaas":
-            with st.sidebar:
-                selected_sub = option_menu(
-                    menu_title="Nexaas",
-                    options=["Lançamento de Medição", "Baixar Malote", "Calculo de Rescisão", "Calculo de Aporte", "Contratos AI", "Consulta de CNPJ"],
-                    icons=["bi-cash-coin", "bi-cloud-download", "bi-x", "bi-cash-coin", "bi-file-earmark", "bi-search"],
-                    menu_icon="bi-tools",
-                    default_index=0,
-                    #styles=menu_style
-                )
+    # Encontrar o menu e submenu selecionados e exibir conteúdo na área principal
+    for menu in menus['menus']:
+        if selected_main == menu['title']:
+            if 'submenu' in menu:
+                with st.sidebar:
+                    selected_sub = option_menu(
+                        menu_title="Submenu",
+                        options=[sub['title'] for sub in menu['submenu']],
+                        icons=[sub['icon'] for sub in menu['submenu']],
+                        menu_icon="bi-tools",
+                        default_index=0
+                    )
+                execute_menu_action(selected_sub, menu['submenu'])
+            else:
+                execute_menu_action(menu['title'], menus['menus'])
 
-            if selected_sub == "Lançamento de Medição":
-                billing_measurements.show()
-            # elif selected_sub == "Baixar Malote":
-            #     bank_batch_processing.show()
-            # elif selected_sub == "Calculo de Rescisão":
-            #     client_contract_termination.show()
-            elif selected_sub == "Calculo de Aporte":
-                assess_capital_requirements.show()
-            elif selected_sub == "Contratos AI":
-                contracts_summary.show()
+def execute_menu_action(selected, items):
+    for item in items:
+        if selected == item['title']:
+            # Dynamically call the function from the my_pages module
+            module = globals().get(item['module'])
+            if module and hasattr(module, 'show'):
+                module.show()
 
 if __name__ == '__main__':
     main()

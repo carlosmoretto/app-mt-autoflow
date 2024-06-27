@@ -1,0 +1,87 @@
+{
+    "menus": [
+        {
+            "title": "Inicio",
+            "icon": "house",
+            "module": "home",
+            "permissions": [
+                "User",
+                "Admin"
+            ],
+            "order": 1
+        },
+        {
+            "title": "Nexaas",
+            "icon": "bi-tools",
+            "permissions": [
+                "User",
+                "Admin"
+            ],
+            "order": 2,
+            "submenu": [
+                {
+                    "title": "Lançamento de Medição",
+                    "icon": "bi-cash-coin",
+                    "module": "billing_measurements",
+                    "permissions": [
+                        "User",
+                        "Admin"
+                    ],
+                    "order": 3
+                },
+                {
+                    "title": "Calculo de Aporte",
+                    "icon": "bi-cash-coin",
+                    "module": "assess_capital_requirements",
+                    "permissions": [
+                        "User",
+                        "Admin"
+                    ],
+                    "order": 1
+                },
+                {
+                    "title": "Contratos AI",
+                    "icon": "bi-file-earmark",
+                    "module": "contracts_summary",
+                    "permissions": [
+                        "User",
+                        "Admin"
+                    ],
+                    "order": 2
+                }
+            ],
+            "module": "home"
+        },
+        {
+            "title": "Administrador",
+            "icon": "bi-tools",
+            "permissions": [
+                "User",
+                "Admin"
+            ],
+            "order": 3,
+            "submenu": [
+                {
+                    "title": "Permissão",
+                    "icon": "bi-lock",
+                    "module": "autoflow_rule_manager",
+                    "permissions": [
+                        "User",
+                        "Admin"
+                    ],
+                    "order": 2
+                },
+                {
+                    "title": "Menu e Permissão",
+                    "icon": "bi-menu-app",
+                    "module": "autoflow_manager_menu",
+                    "permissions": [
+                        "User",
+                        "Admin"
+                    ],
+                    "order": 1
+                }
+            ]
+        }
+    ]
+}
