@@ -81,6 +81,7 @@ def show():
         st.subheader("Executando calculo de aporte para cada conta bancária existente. :rocket:")
 
         bank_list = df_agruped["expected_deposit_account_id"].unique()
+        bank_list = [int(x) for x in bank_list]
         
         saldo_total_inicial = 0
         
@@ -90,10 +91,10 @@ def show():
             if bank > 0:
                 #consulta o saldo inicial de cada conta
                 with st.spinner('Carregando dados das contas bancárias...'):
-                    bank_res = api.get_deposit_accounts(id_entity, bank)                
+                    bank_res = api.get_deposit_accounts(id_entity, bank)
 
                 bank_df = pd.DataFrame(bank_res)
-                
+
                 deposit_account_calculated_balance = float(0.00)
                 if "deposit_account" in bank_df.columns:
                     deposit_account_name = bank_df['deposit_account']['name']
