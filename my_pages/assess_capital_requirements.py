@@ -52,16 +52,12 @@ def show():
         # Inicializar a API
         api = FinteraAPI(BASE_URL, TOKEN)
         
-        # calculo de aporte para next_days 
-        next_days = 10
-
-        group_by = []
-        
+        group_by = []        
         with st.status("Downloading..."):
             st.write("Procurando contas a pagar...")
             type = "payable_accounts"
-            result = api.list_payable_accounts(id_entity, type, {"search[due_date_gte]":"22/06/2024", 
-                                                        "search[due_date_lte]":"15/07/2024"})
+            result = api.list_payable_accounts(id_entity, type, {"search[due_date_gte]":"01/07/2024", 
+                                                        "search[due_date_lte]":"05/07/2024"})
             df_agruped = prepare_counts(result, "payable_account")
             
             group_by.append("payable_account.amount")
@@ -70,8 +66,8 @@ def show():
                 st.write("Procurando contas a receber...")
                 df_agruped_pagar = df_agruped
                 type = "receivable_accounts"
-                result = api.list_payable_accounts(id_entity, type, {"search[due_date_gte]":"22/06/2024", 
-                                                            "search[due_date_lte]":"15/07/2024"})
+                result = api.list_payable_accounts(id_entity, type, {"search[due_date_gte]":"01/07/2024", 
+                                                        "search[due_date_lte]":"05/07/2024"})
                 df_agruped = prepare_counts(result, "receivable_account")
                 group_by.append("receivable_account.amount")
 
@@ -88,12 +84,14 @@ def show():
         
         saldo_total_inicial = 0
         
-        for bank in bank_list:           
+        i = 0
+        for bank in bank_list:
+            i += 1
             if bank > 0:
                 #consulta o saldo inicial de cada conta
                 with st.spinner('Carregando dados das contas bancárias...'):
                     bank_res = api.get_deposit_accounts(id_entity, bank)                
-                
+
                 bank_df = pd.DataFrame(bank_res)
                 
                 deposit_account_calculated_balance = float(0.00)
@@ -107,16 +105,19 @@ def show():
                     
                     df_filtered = df_agruped[df_agruped["expected_deposit_account_id"] == bank]
                     df = creat_capila_support(df_filtered, account_min, deposit_account_calculated_balance)
-                    create_table(df)
+
+                    st.write("Valor total de aportes para o perído: "+ helper().get_number(df['aporte'].sum()))
+                    create_table(df, f"data_editor_{i}")
         
         if len(bank_list) > 0:
             st.write("3. Totalizador geral de aportes....")
             df = df_agruped.groupby("due_date").sum(group_by).reset_index()
             df = creat_capila_support(df, account_min, saldo_total_inicial)
-            create_table(df)
+
+            st.write("Valor total de aportes para o perído: "+ helper().get_number(df['aporte'].sum()))
+            create_table(df, "data_editor_summery")
 
             create_summary(df)
-
 
 def prepare_counts(results, type_str):
     
@@ -134,7 +135,8 @@ def prepare_counts(results, type_str):
     df = df[[f'{type_str}.{x}' for x in index]]
 
     # converte colunas vazias para zero
-    df['expected_deposit_account_id'] = df[f'{type_str}.expected_deposit_account_id'].fillna(0).astype(int)
+    df['expected_deposit_account_id'] = df[f'{type_str}.expected_deposit_account_id'].fillna(0)
+    df['expected_deposit_account_id'] = df['expected_deposit_account_id'].infer_objects()
 
     # converte o campo vencimento para datetime
     df[f'{type_str}.due_date'] = pd.to_datetime(df[f'{type_str}.due_date'])
@@ -179,26 +181,29 @@ def creat_capila_support(df, min_bank_balance, bank_balance):
     
     return df
 
-def create_table(df):
-    st.data_editor(df,
+def create_table(df, key_form):
+
+    df['aporte'] = df['aporte'].map(lambda x: f"{x:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+    if 'receivable_account.amount' in df.columns:
+        df['receivable_account.amount'] = df['receivable_account.amount'].map(lambda x: f"{x:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+    df['payable_account.amount'] = df['payable_account.amount'].map(lambda x: f"{x:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+    df['novo_saldo'] = df['novo_saldo'].map(lambda x: f"{x:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'))
+    
+    st.dataframe(df,
                 column_config={
                     "due_date": st.column_config.DateColumn(
                         "Data",
-                        format="DD/MM/YYYY"
-                    ),"receivable_account.amount": st.column_config.NumberColumn(
+                        format="dddd, DD/MM/YYYY",
+                        width=None
+                    ),"receivable_account.amount": st.column_config.TextColumn(
                         "A receber",
-                        format="%.2f",
-                    ),"payable_account.amount": st.column_config.NumberColumn(
+                    ),"payable_account.amount": st.column_config.TextColumn(
                         "A Pagar",
-                        format="%.2f",
-                    ),"aporte": st.column_config.NumberColumn(
+                    ),"aporte": st.column_config.TextColumn(
                         "Valor a Aportar",
-                        format="%.2f",
-                    ),"novo_saldo": st.column_config.NumberColumn(
+                    ),"novo_saldo": st.column_config.TextColumn(
                         "Saldo",
-                        format="%.2f",
-                    ),                                        
-                })
+                    )})
     
 def create_summary (df):
     st.subheader("Processo de Calculo Feito com Sucesso:")
