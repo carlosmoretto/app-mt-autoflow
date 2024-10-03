@@ -4,7 +4,7 @@ import json
 import os
 
 from authentication.login import authenticate, logout
-from my_pages import home, assess_capital_requirements, billing_measurements, contracts_summary, autoflow_manager_menu
+from my_pages import home, assess_capital_requirements, billing_measurements, billing_description_manager, autoflow_manager_menu
 
 # Função para carregar as configurações do menu de um arquivo JSON
 def load_menu_config():

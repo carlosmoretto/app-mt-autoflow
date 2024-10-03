@@ -6,6 +6,7 @@ import os
 import logging
 import sys
 import streamlit as st
+import time
 
 class Fintera:
 
@@ -18,14 +19,14 @@ class Fintera:
         if self.organization_id is None or len(self.headers) == 0:
             raise ValueError("Entity wasn't difined")
 
-    def getInvoice(self, contract_id, params):
-        url = f"{self.base_url}contracts/{contract_id}/invoices/search?{params}"
+    # def getInvoice(self, contract_id, params):
+    #     url = f"{self.base_url}contracts/{contract_id}/invoices/search?{params}"
 
-        response = requests.get(url, headers=self.headers)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return None
+    #     response = requests.get(url, headers=self.headers)
+    #     if response.status_code == 200:
+    #         return response.json()
+    #     else:
+    #         return None
 
     def getTokens(self):
         # FGP Desenvolvimento de Software LTDA (14.209.764/0001-04)
@@ -109,6 +110,51 @@ class Fintera:
 
         return contract_list
 
+    def getInvoice(self, organization_id, params=dict):
+        invoices = []  # Lista para armazenar todos os registros acumulados
+        page = 1       # Inicializa a contagem de páginas
+        seen_invoice_ids = set()  # Conjunto para rastrear IDs já vistos
+        
+        # Adiciona parâmetros de paginação
+        if params is None:
+            params = {}
+
+        params['per_page'] = 50  # Define quantos registros por página
+
+        while True:
+            params["page"] = page  # Atualiza o número da página na requisição
+            query_string = urlencode(params)
+            url = self.full_url_base(f"api/v1/organizations/{organization_id}/invoices/search?{query_string}")
+            print(url)
+
+            response = requests.get(url, headers=self.headers)
+
+            if response.status_code != 200:
+                break
+
+            data = response.json()
+            if data.get('invoices') and len(data['invoices']) > 0:
+                print( len(data['invoices']) )
+                for invoice in data['invoices']:
+                    # Verificar se o ID da invoice já foi visto
+                    invoice_id = invoice.get('id')
+                    if invoice_id not in seen_invoice_ids:
+                        invoices.append(invoice)  # Adiciona apenas invoices únicas
+                        seen_invoice_ids.add(invoice_id)  # Adiciona o ID ao conjunto
+                    else:
+                        print('ids repetidos')
+                        print(invoice_id)
+                page += 1
+            else:
+                break
+
+            if page == 8:  # Limitação de 8 páginas (ajuste se necessário)
+                break
+
+        time.sleep(5)
+
+        return invoices
+
     def full_url_base (self, url_complement):
         return f"{self.base_url}{url_complement}"
         
@@ -132,11 +178,6 @@ class Fintera:
             return response.json()
         else:
             return None
-
-    def getAttachments(self):
-        self.validadeEntity()
-        url = f"{self.base_url}api/v1/contracts/{contract_id}/invoices/{invoice_id}"
-
 
 # f = Fintera()
 # rs = f.setEntity("Filial").getAttachments()

@@ -22,4 +22,5 @@ def authenticate():
 def logout():
     if 'authenticated' in st.session_state:
         del st.session_state['authenticated']  # Remove a informação de autenticação do usuário
-        st.experimental_rerun()  # Reinicia o app para refletir o logout
+        # st.experimental_rerun()  # Reinicia o app para refletir o logout
+        st.rerun()  # Reinicia o app para refletir o logout
