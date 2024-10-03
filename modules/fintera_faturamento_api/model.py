@@ -569,7 +569,7 @@ class Model:
                 # Adicionar lock para o CNPJ e competência
                 lock_manager.add_cnpj_date_lock(competencia, cnpj, msg, empresa_name, atualizar)
 
-        self.writterPreview(preview)
+        #self.writterPreview(preview)
 
         return
 
