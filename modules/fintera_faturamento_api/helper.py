@@ -5,6 +5,8 @@ import openpyxl
 import os
 import time
 import random
+import pandas as pd
+import json
 
 class Helper:
 
@@ -84,12 +86,8 @@ class Helper:
 		return data_list
 
 	def getPath (self, fileName=''):
-     
 		base_path = os.path.dirname(__file__)
 		return os.path.join(base_path, fileName)
-
-		diretorio_arquivo = os.path.dirname(__file__)
-		return f'{diretorio_arquivo}\{fileName}'
 
 	# Aqui começo a trabalhar na planilha de configuração cadastradas na planilha de configuração
 	def getLimite(self, tipo=""):

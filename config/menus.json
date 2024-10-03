@@ -40,9 +40,9 @@
                     "order": 1
                 },
                 {
-                    "title": "Contratos AI",
-                    "icon": "bi-file-earmark",
-                    "module": "contracts_summary",
+                    "title": "Atualizar Descrições",
+                    "icon": "bi-arrow-clockwise",
+                    "module": "billing_description_manager",
                     "permissions": [
                         "User",
                         "Admin"
