@@ -6,6 +6,8 @@ import time
 
 from modules import Model
 from modules.fintera_faturamento_api.faturamento_lock import LockManager
+from modules.fintera_faturamento_api.invoice_description_processor import InvoiceDescriptionProcessor
+
 
 def show():
 
@@ -35,14 +37,17 @@ def show():
             """)
 
     m = Model()
+
+    invoice = InvoiceDescriptionProcessor()
+
     uploaded_file = st.file_uploader("Escolha o arquivo de medição")
 
     if uploaded_file is not None:
         # Converter o arquivo de medição para a lista de dicionários
-        m.setFileBaseMedicao(m.getHelper().planilha_para_lista_dicionarios(uploaded_file))
+        invoice.set_medicao_file(m.getHelper().planilha_para_lista_dicionarios(uploaded_file))
 
         with st.container():
-            st.success("Aconselhado: Visualize por um arquivo Excel antes de atualiza")
+            st.info("Aconselhado: Visualize por um arquivo Excel antes de atualiza")
             if st.button("Carregar a pré-visualização"):
                 with st.spinner('Aguarde o arquivo ser gerado...'):
 
@@ -51,27 +56,27 @@ def show():
                     name_file = f"descriction_{current_date}.xlsx"
 
                     # Gerar a pré-visualização (substitua pela função real)
-                    preview = pd.DataFrame(m.previewDescriptions())
+                    preview = pd.DataFrame(invoice.preview_description())
+
+                    st.success("Arquivo de pré-visualização gerado com sucesso!")
 
                     # Converter o DataFrame em Excel no buffer
                     file = convert_excel(preview)
-                    st.success("Arquivo de pré-visualização gerado com sucesso!")
                     # Download do arquivo Excel
                     st.download_button(label="Download da pre-visualização",
                                     data=file, 
                                     file_name=name_file, 
                                     mime="application/vnd.ms-excel")
 
-            st.warning("Não aconselhado: Atualização direta :heavy_exclamation_mark:")
+            st.warning("Não recomendado atualização direta :heavy_exclamation_mark:")
+
             if st.button("Atualizar descrição das cobranças"):
                 with st.spinner('Aguarde enquanto o faturamento é atualizado...'):
-                    
-                    m.processDescription()
+                    competencia = invoice.update_invoice_descriptions()
 
                     lock = LockManager('locks.json')
-                    if len(lock.get_receivables(datetime(2024, 9, 1))) > 1:
-                        df_receivables = pd.DataFrame(lock.get_receivables(datetime(2024, 9, 1)))
-
+                    if len(lock.get_receivables(competencia)) > 0:
+                        df_receivables = pd.DataFrame(lock.get_receivables(competencia))
                         st.dataframe(df_receivables)
 
 if __name__ == '__main__':
