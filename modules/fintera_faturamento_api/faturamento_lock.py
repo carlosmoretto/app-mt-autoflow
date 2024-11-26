@@ -33,32 +33,28 @@ class LockManager:
         except Exception as e:
             print(f"An error occurred while saving the JSON file: {e}")
 
-    def add_cnpj_date_lock(self, date_str, cnpj, msg='', company_name='', atualizado=0):
-        cnpj_date_entry = {"date": date_str, "cnpj": cnpj, 'msg':msg, 'company_name':company_name, 'atualizado': atualizado}
-        if cnpj_date_entry not in self.data["cnpj_dates"]:
-            self.data["cnpj_dates"].append(cnpj_date_entry)
+    def add_fintera_billing_account_id_date_lock(self, date_str, fintera_billing_account_id, msg='', company_name='', atualizado=0):
+        fintera_billing_account_id_date_entry = {"date": date_str, "fintera_billing_account_id": fintera_billing_account_id, 'msg':msg, 'company_name':company_name, 'atualizado': atualizado}
+        if fintera_billing_account_id_date_entry not in self.data["cnpj_dates"]:
+            self.data["cnpj_dates"].append(fintera_billing_account_id_date_entry)
             self._save_data()
 
-    def check_cnpj_date_lock(self, date_str, cnpj):
+    def check_fintera_billing_account_id_date_lock(self, date_str, fintera_billing_account_id):
         # Percorrer todos os registros dentro de 'cnpj_dates'
         for entry in self.data["cnpj_dates"]:
             # Verificar se a entrada tem o CNPJ e a data correspondentes
-            if entry['date'] == date_str and entry['cnpj'] == cnpj:
+            if entry['date'] == date_str and entry['fintera_billing_account_id'] == fintera_billing_account_id:
                 return True
         return False
     
-    def get_cnpj(self, competencia):
+    def get_fintera_billing_account_id(self, competencia):
         # Converter a competencia para o formato string caso seja um objeto datetime
         if isinstance(competencia, datetime):
             competencia = competencia.strftime("%Y-%m")
 
         # Filtrar e retornar todos os CNPJs para a competência passada
-        return [entry['cnpj'] for entry in self.data['cnpj_dates'] if entry['date'] == competencia]
+        return [entry['fintera_billing_account_id'] for entry in self.data['cnpj_dates'] if entry['date'] == competencia]
 
     def get_receivables(self, competencia):
-        # Converter a competencia para o formato string caso seja um objeto datetime
-        if isinstance(competencia, datetime):
-            competencia = competencia.strftime("%Y-%m")
-
         # Filtrar e retornar todos os CNPJs para a competência passada
         return [entry for entry in self.data['cnpj_dates'] if entry['date'] == competencia]
